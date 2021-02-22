@@ -1,5 +1,5 @@
 {
-  "name": "Lightalarm Card",
+  "name": "Media Player Alarm Card",
   "content_in_root": false,
-  "filename": "lightalarm-card.js"
+  "filename": "mediaplayer-alarm-card.js"
 }

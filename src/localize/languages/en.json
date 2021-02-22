@@ -2,16 +2,23 @@
   "config": {
     "optional": "Optional",
     "name": "Title",
-    "time_entity": "Time Entity",
-    "mode_entity": "Mode Entity",
-    "duration_entity": "Duration Entity",
+    "media_player": "Media-player entity",
+    "platform": "Media-player platform",
+    "time_attribute": "Alarm time",
+    "volume_attribute": "Volume attribute",
+    "source_attribute": "Source attribute",
+    "source_list_attribute": "Source list attribute",
+    "volume_settings_attribute": "Volume settings attribute",
     "invalid_configuration": "Invalid configuration",
-    "required_entity_missing": "A required entity %entity% is not set",
-    "required_entity_not_found": "A required entity %entity% is not found",
-    "force_native_time_picker_for_device": "Force the native time picker in this browser"
+    "required_entity_missing": "The entity %entity% has not been set",
+    "required_entity_not_found": "The needed entity %entity% has not been found",
+    "required_attribute_not_found": "The needed attribute %attribute% was not found in the given media player",
+    "required_attribute_missing": "The needed attribute %attribute% was not defined.",
+    "force_native_time_picker_for_device": "Use the integrated time picker"
   },
   "card": {
-    "alarm_mode": "Alarm Mode",
-    "alarm_duration": "Alarm Duration"
+    "alarm_enabled": "Alarm on",
+    "alarm_volume": "Volume",
+    "alarm_source": "Source"
   }
 }

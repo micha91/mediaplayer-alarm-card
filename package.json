@@ -1,5 +1,5 @@
 {
-  "name": "lightalarm-card",
+  "name": "mediaplayer-alarm",
   "version": "3.0.3",
   "description": "Lovelace Lightalarm Card",
   "keywords": [
@@ -10,8 +10,8 @@
     "lovelace",
     "custom-cards"
   ],
-  "module": "lightalarm-card.js",
-  "repository": "git@github.com:chaptergy/lightalarm-card.git",
+  "module": "mediaplayer-alarm.js",
+  "repository": "git@github.com:chaptergy/mediaplayer-alarm.git",
   "author": "chaptergy",
   "license": "MIT",
   "dependencies": {

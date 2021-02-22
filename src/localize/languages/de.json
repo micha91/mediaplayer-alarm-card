@@ -2,16 +2,23 @@
   "config": {
     "optional": "Optional",
     "name": "Titel",
-    "time_entity": "Zeit-Entität",
-    "mode_entity": "Modus-Entität",
-    "duration_entity": "Dauer-Entität",
+    "media_player": "Media Player-Entität",
+    "platform": "Media Player Plattform",
+    "time_attribute": "Uhrzeit Attribut",
+    "volume_attribute": "Lautstärke Attribut",
+    "source_attribute": "Quelle Attribut",
+    "source_list_attribute": "Quellen Liste Attribut",
+    "volume_settings_attribute": "Lautstärke Einstellungs Attribut",
     "invalid_configuration": "Ungültige Konfiguration",
     "required_entity_missing": "Die notwendige Entität %entity% ist nicht gesetzt",
     "required_entity_not_found": "Die notwendige Entität %entity% konnte nicht gefunden werden",
+    "required_attribute_not_found": "Das notwendige Attribut %attribute% konnte nicht im mediaplayer gefunden werden",
+    "required_attribute_missing": "Das notwendige Attribut %attribute% wurde nicht definiert.",
     "force_native_time_picker_for_device": "Das integrierte Zeitauswahlmenü dises Browsers verwenden"
   },
   "card": {
-    "alarm_mode": "Alarmmodus",
-    "alarm_duration": "Alarmdauer"
+    "alarm_enabled": "Wecker an",
+    "alarm_volume": "Lautstärke",
+    "alarm_source": "Quelle"
   }
 }

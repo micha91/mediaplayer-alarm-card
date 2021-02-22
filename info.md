@@ -1,12 +1,12 @@
 # Lovelace Lightalarm Card
 
-This card provides a frontend for entities being used to control a light alarm.  
-**It does not implement any lightalarm logic!** For more information on how I implemented the logic see the [Readme](https://github.com/chaptergy/lightalarm-card#lightalarm-logic)
+This card provides a frontend for entities being used to control a light alarm.
+**It does not implement any lightalarm logic!** For more information on how I implemented the logic see the [Readme](https://github.com/chaptergy/mediaplayer-alarm#lightalarm-logic)
 
 If you have an **iOS Device** and would like to use the builtin time picker, have a look at [Force Native Timepicker](#force-native-timepicker).
 
-![](https://raw.githubusercontent.com/chaptergy/lightalarm-card/master/img/screenshot1.png)
-![](https://raw.githubusercontent.com/chaptergy/lightalarm-card/master/img/screenshot2.png)
+![](https://raw.githubusercontent.com/chaptergy/mediaplayer-alarm/master/img/screenshot1.png)
+![](https://raw.githubusercontent.com/chaptergy/mediaplayer-alarm/master/img/screenshot2.png)
 
 It displays three entities: an `input_datetime` as the time, an `input_select` as the alarm mode and an `input_number` as the fade duration the alarm should take.
 
@@ -24,12 +24,12 @@ It displays three entities: an `input_datetime` as the time, an `input_select` a
 
 #### Manual Installation
 
-1. Download and copy the `dist/lightalarm-card.js` file into your `config/www` directory.
-2. Add a reference to `lightalarm-card.js` inside your ui-lovelace.yaml or at the top of the raw config editor UI:
+1. Download and copy the `dist/mediaplayer-alarm.js` file into your `config/www` directory.
+2. Add a reference to `mediaplayer-alarm.js` inside your ui-lovelace.yaml or at the top of the raw config editor UI:
 
 ```yaml
 resources:
-  - url: /local/lightalarm-card.js
+  - url: /local/mediaplayer-alarm.js
     type: module
 ```
 
@@ -37,7 +37,7 @@ resources:
 
 | Name            | Type   | Requirement  | Description                                  |
 | --------------- | ------ | ------------ | -------------------------------------------- |
-| type            | string | **Required** | `custom:lightalarm-card`                     |
+| type            | string | **Required** | `custom:mediaplayer-alarm`                     |
 | name            | string | **Optional** | Card title                                   |
 | time_entity     | string | **Required** | `input_datetime` entity to select alarm time |
 | mode_entity     | string | **Required** | `input_select` entity to select alarm mode   |
@@ -47,4 +47,4 @@ resources:
 
 In the visual editor of the lovalace card, you have an additional option to _Force use of the native time picker_. By default when tapping the alarm time, the card tries to open the native timepicker popup, and but also falls back to two input fields, for browsers, who don't have a popup time picker interface. This works very well on Android devices, however on iOS devices, the focus is overwritten by the fallback input fields, hiding the time picker right away. If you are certain, that your browser offers a better timepicker, you can switch this switch on, to enforce using the browser native time picker. This setting will be saved in the local storage (similar to cookies), so it can be a different value per separate browser instance.
 
-![](https://raw.githubusercontent.com/chaptergy/lightalarm-card/master/img/screenshot_native-timepicker-ios.jpg)
+![](https://raw.githubusercontent.com/chaptergy/mediaplayer-alarm/master/img/screenshot_native-timepicker-ios.jpg)

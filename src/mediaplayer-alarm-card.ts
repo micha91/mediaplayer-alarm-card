@@ -21,26 +21,25 @@ import {
 
 import './editor';
 
-import { LightalarmCardConfig } from './types';
 import { CARD_VERSION } from './const';
-
+import { MediaplayerAlarmConfig } from './types';
 import { localize } from './localize/localize';
 
 /* eslint no-console: 0 */
 console.info(
-  `%c LIGHTALARM-CARD %c ${CARD_VERSION} `,
+  `%c MEDIAPLAYER-ALARM-CARD %c ${CARD_VERSION} `,
   'color: cornsilk; font-weight: bold; background: firebrick',
   'color: firebrick; font-weight: bold; background: cornsilk',
 );
 
-@customElement('lightalarm-card')
-export class LightalarmCard extends LitElement {
+@customElement('mediaplayer-alarm')
+export class MediaplayerAlarmCard extends LitElement {
   private timeInputStatus: 'none' | 'shown' = 'none';
   private debounceTimer;
   private inputBlurTimer;
 
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
-    return document.createElement('lightalarm-card-editor') as LovelaceCardEditor;
+    return document.createElement('mediaplayer-alarm-editor') as LovelaceCardEditor;
   }
 
   public static getStubConfig(): object {
@@ -48,17 +47,35 @@ export class LightalarmCard extends LitElement {
   }
 
   @property({ attribute: false }) public hass?: HomeAssistant;
-  @internalProperty() private config?: LightalarmCardConfig;
+  @internalProperty() private config?: MediaplayerAlarmConfig;
 
-  public setConfig(config: LightalarmCardConfig): void {
+  public setConfig(config: MediaplayerAlarmConfig): void {
     if (!config) throw new Error(localize('config.invalid_configuration'));
 
-    if (!config.time_entity)
-      throw new Error(localize('config.required_entity_missing', '%entity%', localize('config.time_entity')));
-    if (!config.mode_entity)
-      throw new Error(localize('config.required_entity_missing', '%entity%', localize('config.mode_entity')));
-    if (!config.duration_entity)
-      throw new Error(localize('config.required_entity_missing', '%entity%', localize('config.duration_entity')));
+    if (!config.media_player)
+      throw new Error(localize('config.required_entity_missing', '%entity%', localize('config.media_player')));
+    if (!config.time_attribute)
+      throw new Error(localize('config.required_attribute_missing', '%attribute%', localize('config.time_attribute')));
+    if (!config.enabled_attribute)
+      throw new Error(
+        localize('config.required_attribute_missing', '%attribute%', localize('config.enabled_attribute')),
+      );
+    if (!config.volume_attribute)
+      throw new Error(
+        localize('config.required_attribute_missing', '%attribute%', localize('config.volume_attribute')),
+      );
+    if (!config.source_attribute)
+      throw new Error(
+        localize('config.required_attribute_missing', '%attribute%', localize('config.source_attribute')),
+      );
+    if (!config.source_list_attribute)
+      throw new Error(
+        localize('config.required_attribute_missing', '%attribute%', localize('config.source_list_attribute')),
+      );
+    if (!config.volume_settings_attribute)
+      throw new Error(
+        localize('config.required_attribute_missing', '%attribute%', localize('config.volume_settings_attribute')),
+      );
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -76,10 +93,7 @@ export class LightalarmCard extends LitElement {
     if (!shouldUpdate) {
       const changedHass: HomeAssistant = changedProps['hass'];
       return (
-        !changedHass || // hass is not set
-        changedHass.states[this.config!.time_entity] !== this.hass!.states[this.config!.time_entity] ||
-        changedHass.states[this.config!.mode_entity] !== this.hass!.states[this.config!.mode_entity] ||
-        changedHass.states[this.config!.duration_entity] !== this.hass!.states[this.config!.duration_entity]
+        !changedHass || changedHass.states[this.config!.media_player] !== this.hass!.states[this.config!.media_player]
       );
     }
     return shouldUpdate;
@@ -90,32 +104,79 @@ export class LightalarmCard extends LitElement {
       return html``;
     }
 
-    const timeStateObj = this.hass.states[this.config.time_entity];
-    if (!timeStateObj) {
-      return html`
-        <hui-warning
-          >${this.hass.localize('config.required_entity_not_found', '%entity%', this.config.time_entity)}</hui-warning
-        >
-      `;
-    }
-
-    const modeStateObj = this.hass.states[this.config.mode_entity];
-    if (!modeStateObj) {
-      return html`
-        <hui-warning
-          >${this.hass.localize('config.required_entity_not_found', '%entity%', this.config.mode_entity)}</hui-warning
-        >
-      `;
-    }
-
-    const durationStateObj = this.hass.states[this.config.duration_entity];
-    if (!durationStateObj) {
+    const alarmEnabled = this.hass.states[this.config.media_player].attributes[this.config.enabled_attribute];
+    if (alarmEnabled === null) {
       return html`
         <hui-warning
           >${this.hass.localize(
-            'config.required_entity_not_found',
-            '%entity%',
-            this.config.duration_entity,
+            'config.required_attribute_not_found',
+            '%attribute%',
+            this.config.enabled_attribute,
+          )}</hui-warning
+        >
+      `;
+    }
+
+    const timeStr = this.hass.states[this.config.media_player].attributes[this.config.time_attribute];
+    if (!timeStr) {
+      return html`
+        <hui-warning
+          >${this.hass.localize(
+            'config.required_attribute_not_found',
+            '%attribute%',
+            this.config.time_attribute,
+          )}</hui-warning
+        >
+      `;
+    }
+
+    const alarmInput = this.hass.states[this.config.media_player].attributes[this.config.source_attribute];
+    if (!alarmInput) {
+      return html`
+        <hui-warning
+          >${this.hass.localize(
+            'config.required_attribute_not_found',
+            '%attribute%',
+            this.config.source_attribute,
+          )}</hui-warning
+        >
+      `;
+    }
+
+    const alarmInputList = this.hass.states[this.config.media_player].attributes[this.config.source_list_attribute];
+    if (!alarmInputList) {
+      return html`
+        <hui-warning
+          >${this.hass.localize(
+            'config.required_attribute_not_found',
+            '%attribute%',
+            this.config.source_list_attribute,
+          )}</hui-warning
+        >
+      `;
+    }
+
+    const volumeSettings = this.hass.states[this.config.media_player].attributes[this.config.volume_settings_attribute];
+    if (!volumeSettings) {
+      return html`
+        <hui-warning
+          >${this.hass.localize(
+            'config.required_attribute_not_found',
+            '%attribute%',
+            this.config.volume_settings_attribute,
+          )}</hui-warning
+        >
+      `;
+    }
+
+    const alarmVolume = this.hass.states[this.config.media_player].attributes[this.config.volume_attribute];
+    if (!alarmVolume) {
+      return html`
+        <hui-warning
+          >${this.hass.localize(
+            'config.required_attribute_not_found',
+            '%attribute%',
+            this.config.volume_attribute,
           )}</hui-warning
         >
       `;
@@ -123,7 +184,7 @@ export class LightalarmCard extends LitElement {
 
     return html`
       <ha-card .header=${this.config.name} tabindex="0">
-        <div class="lightalarm-wrapper" id="lightalarm-wrapper">
+        <div class="alarm-wrapper" id="alarm-wrapper">
           <div class="alarm-time-and-decorator-wrap">
             <svg viewBox="0 0 24 24" class="alarm-time-decorator">
               <path
@@ -132,22 +193,14 @@ export class LightalarmCard extends LitElement {
             </svg>
             <div class="alarm-time-wrap">
               <span class="alarm-time-display">
-                ${timeStateObj.state === 'unknown'
-                  ? '07:00'
-                  : ('0' + timeStateObj.attributes.hour).slice(-2) +
-                    ':' +
-                    ('0' + timeStateObj.attributes.minute).slice(-2)}
+                ${timeStr}
               </span>
               <input
                 type="time"
                 class="alarm-time-picker alarm-time-picker-left"
                 required
-                value="${timeStateObj.state === 'unknown'
-                  ? '07:00'
-                  : ('0' + timeStateObj.attributes.hour).slice(-2) +
-                    ':' +
-                    ('0' + timeStateObj.attributes.minute).slice(-2)}"
-                id="lightalarm-time-picker-left"
+                value="${timeStr.slice(0, 1) + ':' + timeStr.slice(2, 3)}"
+                id="alarm-time-picker-left"
                 @input=${this._selectedTimeValueChangedPicker}
                 @blur=${this._timePickerBlur}
                 @click=${this._timePickerLeftClick}
@@ -156,12 +209,8 @@ export class LightalarmCard extends LitElement {
                 type="time"
                 class="alarm-time-picker alarm-time-picker-right"
                 required
-                value="${timeStateObj.state === 'unknown'
-                  ? '07:00'
-                  : ('0' + timeStateObj.attributes.hour).slice(-2) +
-                    ':' +
-                    ('0' + timeStateObj.attributes.minute).slice(-2)}"
-                id="lightalarm-time-picker-right"
+                value="${timeStr.slice(0, 1) + ':' + timeStr.slice(2, 3)}"
+                id="alarm-time-picker-right"
                 @input=${this._selectedTimeValueChangedPicker}
                 @blur=${this._timePickerBlur}
                 @click=${this._timePickerRightClick}
@@ -172,8 +221,8 @@ export class LightalarmCard extends LitElement {
                   required
                   min="0"
                   max="23"
-                  value="${timeStateObj.state === 'unknown' ? '07' : ('0' + timeStateObj.attributes.hour).slice(-2)}"
-                  id="lightalarm-time-input-hour"
+                  value="${timeStr.slice(0, 1)}"
+                  id="alarm-time-input-hour"
                   @input=${this._selectedTimeValueChangedInput}
                   @blur=${this._timeInputsBlur}
                   @focus=${this._timePickerLeftClick}
@@ -183,8 +232,8 @@ export class LightalarmCard extends LitElement {
                   required
                   min="0"
                   max="59"
-                  value="${timeStateObj.state === 'unknown' ? '00' : ('0' + timeStateObj.attributes.minute).slice(-2)}"
-                  id="lightalarm-time-input-minute"
+                  value="${timeStr.slice(2, 3)}"
+                  id="alarm-time-input-minute"
                   @input=${this._selectedTimeValueChangedInput}
                   @blur=${this._timeInputsBlur}
                   @focus=${this._timePickerRightClick}
@@ -194,44 +243,42 @@ export class LightalarmCard extends LitElement {
           </div>
 
           <div class="alarm-properties-wrap">
+            <label slot="label" for="alarm-enabled">${'alarm status' || localize('card.alarm_enabled')}</label>
+            <ha-switch .checked=${alarmEnabled} @change=${this._enableChanged} id="alarm-enabled"></ha-switch>
+            <label slot="label" for="alarm-input">${'source' || localize('card.alarm_source')}</label>
             <paper-dropdown-menu
-              class="alarm-mode"
-              selected-item-label="${modeStateObj.state}"
-              @selected-item-label-changed="${this._selectedModeChanged}"
-              label="${modeStateObj.attributes.friendly_name || localize('card.alarm_mode')}"
+              class="alarm-input"
+              selected-item-label="${alarmInput}"
+              @selected-item-label-changed="${this._inputChanged}"
+              label="${alarmInputList[alarmInput]}"
             >
-              <paper-listbox
-                slot="dropdown-content"
-                selected="${modeStateObj.attributes.options.indexOf(modeStateObj.state)}"
-              >
+              <paper-listbox slot="dropdown-content">
                 ${repeat(
-                  modeStateObj.attributes.options,
+                  Object.keys(alarmInputList),
                   option =>
                     html`
-                      <paper-item>${option}</paper-item>
+                      <paper-item .value="${option}">${alarmInputList[option]}</paper-item>
                     `,
                 )}
               </paper-listbox>
             </paper-dropdown-menu>
 
-            <div class="alarm-duration">
-              <label slot="label" for="duration-input"
-                >${durationStateObj.attributes.friendly_name || localize('card.alarm_duration')}</label
-              >
-              <div class="alarm-duration-slider">
+            <div class="alarm-volume">
+              <label slot="label" for="alarm-volume">${'volume' || localize('card.alarm_volume')}</label>
+              <div class="alarm-volume-slider">
                 <ha-slider
                   .dir="${computeRTLDirection(this.hass!)}"
-                  .step="${Number(durationStateObj.attributes.step)}"
-                  .min="${Number(durationStateObj.attributes.min)}"
-                  .max="${Number(durationStateObj.attributes.max)}"
-                  .value="${Number(durationStateObj.state)}"
+                  .step="${Number(volumeSettings.step)}"
+                  .min="${Number(volumeSettings.min)}"
+                  .max="${Number(volumeSettings.max)}"
+                  .value="${Number(alarmVolume)}"
                   pin
-                  @change="${this._selectedDurationValueChanged}"
+                  @change="${this._volumeChanged}"
                   ignore-bar-touch
-                  id="duration-input"
+                  id="volume-input"
                 ></ha-slider>
                 <span>
-                  ${Number(durationStateObj.state)} ${durationStateObj.attributes.unit_of_measurement}
+                  ${Number(alarmVolume)}
                 </span>
               </div>
             </div>
@@ -250,25 +297,25 @@ export class LightalarmCard extends LitElement {
         border: 0;
       }
 
-      .lightalarm-wrapper {
+      .alarm-wrapper {
         max-width: 100%;
         padding: 5px 15px 5px 0;
         display: flex;
         align-items: stretch;
       }
-      .lightalarm-wrapper .alarm-time-and-decorator-wrap {
+      .alarm-wrapper .alarm-time-and-decorator-wrap {
         flex-basis: auto;
         flex-basis: content;
         position: relative;
         margin-right: 5px;
       }
-      .lightalarm-wrapper .alarm-properties-wrap {
+      .alarm-wrapper .alarm-properties-wrap {
         flex-grow: 1;
         display: flex;
         flex-direction: column;
       }
 
-      .lightalarm-wrapper .alarm-time-decorator {
+      .alarm-wrapper .alarm-time-decorator {
         position: absolute;
         top: 50%;
         transform: translate(0, -50%);
@@ -278,13 +325,13 @@ export class LightalarmCard extends LitElement {
         transition: opacity 150ms ease-in-out;
       }
 
-      .lightalarm-wrapper.show-input .alarm-time-decorator,
-      .lightalarm-wrapper.force-native-input-hour .alarm-time-decorator,
-      .lightalarm-wrapper.force-native-input-minute .alarm-time-decorator {
+      .alarm-wrapper.show-input .alarm-time-decorator,
+      .alarm-wrapper.force-native-input-hour .alarm-time-decorator,
+      .alarm-wrapper.force-native-input-minute .alarm-time-decorator {
         opacity: 0.07;
       }
 
-      .lightalarm-wrapper .alarm-time-wrap {
+      .alarm-wrapper .alarm-time-wrap {
         position: relative;
         font-size: 1.4rem;
         line-height: 1em;
@@ -293,17 +340,17 @@ export class LightalarmCard extends LitElement {
         top: 50%;
         margin-top: -0.2em;
       }
-      .lightalarm-wrapper .alarm-time-display {
+      .alarm-wrapper .alarm-time-display {
         box-sizing: border-box;
         position: relative;
         margin: 0 2.5rem;
       }
-      .lightalarm-wrapper.show-input .alarm-time-display,
-      .lightalarm-wrapper.force-native-input-hour .alarm-time-display,
-      .lightalarm-wrapper.force-native-input-minute .alarm-time-display {
+      .alarm-wrapper.show-input .alarm-time-display,
+      .alarm-wrapper.force-native-input-hour .alarm-time-display,
+      .alarm-wrapper.force-native-input-minute .alarm-time-display {
         opacity: 0;
       }
-      .lightalarm-wrapper .alarm-time-picker {
+      .alarm-wrapper .alarm-time-picker {
         position: absolute;
         opacity: 0;
         width: 42%;
@@ -317,27 +364,27 @@ export class LightalarmCard extends LitElement {
         z-index: 2;
       }
 
-      .lightalarm-wrapper .alarm-time-picker-left {
+      .alarm-wrapper .alarm-time-picker-left {
         left: 8%;
       }
-      .lightalarm-wrapper .alarm-time-picker-right {
+      .alarm-wrapper .alarm-time-picker-right {
         left: 50%;
       }
 
-      .lightalarm-wrapper.force-native-input-hour .alarm-time-picker-left {
+      .alarm-wrapper.force-native-input-hour .alarm-time-picker-left {
         opacity: 1;
         width: 84%;
         left: 50%;
         transform: translate(-50%, 0);
       }
-      .lightalarm-wrapper.force-native-input-minute .alarm-time-picker-right {
+      .alarm-wrapper.force-native-input-minute .alarm-time-picker-right {
         opacity: 1;
         width: 84%;
         left: 50%;
         transform: translate(-50%, 0);
       }
 
-      .lightalarm-wrapper .alarm-time-input {
+      .alarm-wrapper .alarm-time-input {
         position: absolute;
         display: none;
         top: -0.4rem;
@@ -345,10 +392,10 @@ export class LightalarmCard extends LitElement {
         width: 84%;
         opacity: 1;
       }
-      .lightalarm-wrapper.show-input .alarm-time-input {
+      .alarm-wrapper.show-input .alarm-time-input {
         display: block;
       }
-      .lightalarm-wrapper .alarm-time-input input {
+      .alarm-wrapper .alarm-time-input input {
         width: 1.5em;
         width: 2.3ch;
         box-sizing: content-box;
@@ -362,25 +409,25 @@ export class LightalarmCard extends LitElement {
         text-align: center;
         font-size: inherit;
       }
-      .lightalarm-wrapper .alarm-time-input span {
+      .alarm-wrapper .alarm-time-input span {
         margin: 0 1px;
       }
-      .lightalarm-wrapper .alarm-time-input input:focused {
+      .alarm-wrapper .alarm-time-input input:focused {
         border-bottom: 1px solid var(--paper-input-container-focus-color, var(--primary-color));
       }
-      .lightalarm-wrapper .alarm-time-input input[type='number'] {
+      .alarm-wrapper .alarm-time-input input[type='number'] {
         -moz-appearance: textfield;
       }
-      .lightalarm-wrapper .alarm-time-input input::-webkit-outer-spin-button,
-      .lightalarm-wrapper .alarm-time-input input::-webkit-inner-spin-button {
+      .alarm-wrapper .alarm-time-input input::-webkit-outer-spin-button,
+      .alarm-wrapper .alarm-time-input input::-webkit-inner-spin-button {
         -webkit-appearance: none;
       }
 
-      .lightalarm-wrapper .alarm-mode {
+      .alarm-wrapper .alarm-input {
         margin-bottom: 8px;
       }
 
-      .lightalarm-wrapper .alarm-duration label {
+      .alarm-wrapper .alarm-volume label {
         font-family: var(--paper-font-subhead_-_font-family);
         -webkit-font-smoothing: var(--paper-font-subhead_-_-webkit-font-smoothing);
         font-size: calc(var(--paper-font-subhead_-_font-size) * 0.75);
@@ -392,11 +439,11 @@ export class LightalarmCard extends LitElement {
         transform: scale(0.75);
         color: var(--paper-input-container-color, var(--secondary-text-color));
       }
-      .lightalarm-wrapper .alarm-duration-slider {
+      .alarm-wrapper .alarm-volume-slider {
         display: flex;
         align-items: center;
       }
-      .lightalarm-wrapper .alarm-duration-slider ha-slider {
+      .alarm-wrapper .alarm-volume-slider ha-slider {
         flex-grow: 1;
         width: auto;
         margin-left: calc(-15px - var(--calculated-paper-slider-height) / 2);
@@ -405,7 +452,7 @@ export class LightalarmCard extends LitElement {
   }
 
   private _showTimeInputs(): void {
-    const timeInputWrap = this.shadowRoot!.getElementById('lightalarm-wrapper');
+    const timeInputWrap = this.shadowRoot!.getElementById('alarm-wrapper');
     if (!timeInputWrap || this.timeInputStatus === 'shown') return;
     timeInputWrap.classList.add('show-input');
     this.timeInputStatus = 'shown';
@@ -418,22 +465,22 @@ export class LightalarmCard extends LitElement {
   private _selectedTimeValueChangedPicker(ev): void {
     const newTime = ev.target.value;
 
-    if (localStorage.getItem('lightalarmCard.forceNativePicker') === 'true') {
+    if (localStorage.getItem('mediaplayerAlarmCard.forceNativePicker') === 'true') {
       this._debounce('saveTimePickerValue', 3000, false, newTime);
     } else {
       this._saveTimePickerValue(newTime);
 
       // blur all input fields to hide onscreen keyboard
-      const hourInput = this.shadowRoot!.getElementById('lightalarm-time-input-hour') as HTMLInputElement;
+      const hourInput = this.shadowRoot!.getElementById('alarm-time-input-hour') as HTMLInputElement;
       hourInput.value = newTime.split(':')[0];
       hourInput?.blur();
       clearTimeout(this.inputBlurTimer);
-      const minuteInput = this.shadowRoot!.getElementById('lightalarm-time-input-minute') as HTMLInputElement;
+      const minuteInput = this.shadowRoot!.getElementById('alarm-time-input-minute') as HTMLInputElement;
       minuteInput.value = newTime.split(':')[1];
       minuteInput?.blur();
       clearTimeout(this.inputBlurTimer);
 
-      const timeInputWrap = this.shadowRoot!.getElementById('lightalarm-wrapper');
+      const timeInputWrap = this.shadowRoot!.getElementById('alarm-wrapper');
       if (!timeInputWrap) return;
       timeInputWrap.classList.remove('show-input', 'force-native-input-hour', 'force-native-input-minute');
       this.timeInputStatus = 'none';
@@ -445,7 +492,7 @@ export class LightalarmCard extends LitElement {
   }
 
   private _saveTimePickerValue(newTime: string): void {
-    const stateObj = this.hass!.states[this.config!.time_entity];
+    const timeStr = this.hass!.states[this.config!.media_player].attributes[this.config!.time_attribute];
 
     // Cancel if values invalid
     if (newTime === '') {
@@ -453,22 +500,22 @@ export class LightalarmCard extends LitElement {
     }
 
     // Update time picker values
-    const leftPicker = this.shadowRoot!.getElementById('lightalarm-time-picker-left') as HTMLInputElement;
+    const leftPicker = this.shadowRoot!.getElementById('alarm-time-picker-left') as HTMLInputElement;
     leftPicker.value = newTime;
-    const rightPicker = this.shadowRoot!.getElementById('lightalarm-time-picker-right') as HTMLInputElement;
+    const rightPicker = this.shadowRoot!.getElementById('alarm-time-picker-right') as HTMLInputElement;
     rightPicker.value = newTime;
 
-    if (newTime !== stateObj.state) {
-      this.hass!.callService(stateObj.entity_id.split('.', 1)[0], 'set_datetime', {
-        entity_id: stateObj.entity_id,
-        time: newTime,
+    if (newTime !== timeStr) {
+      this.hass!.callService(this.config!.platform, 'set_alarm', {
+        entity_id: this.config!.media_player,
+        alarm_time: newTime,
       });
     }
   }
   private _saveTimeInputValue(): void {
-    const stateObj = this.hass!.states[this.config!.time_entity];
-    const timeInputHour = this.shadowRoot!.getElementById('lightalarm-time-input-hour') as HTMLInputElement;
-    const timeInputMinute = this.shadowRoot!.getElementById('lightalarm-time-input-minute') as HTMLInputElement;
+    const timeStr = this.hass!.states[this.config!.media_player].attributes[this.config!.time_attribute];
+    const timeInputHour = this.shadowRoot!.getElementById('alarm-time-input-hour') as HTMLInputElement;
+    const timeInputMinute = this.shadowRoot!.getElementById('alarm-time-input-minute') as HTMLInputElement;
     const timeInputHourValue = Number(timeInputHour.value);
     const timeInputMinuteValue = Number(timeInputMinute.value);
 
@@ -482,7 +529,7 @@ export class LightalarmCard extends LitElement {
       timeInputMinuteValue > 59
     ) {
       console.error(
-        `Values for lightalarm time of '${timeInputHour.value}' hours and '${timeInputMinute.value}' is not a valid time!`,
+        `Values for alarm time of '${timeInputHour.value}' hours and '${timeInputMinute.value}' is not a valid time!`,
       );
       return;
     }
@@ -490,15 +537,15 @@ export class LightalarmCard extends LitElement {
     const time = ('0' + timeInputHourValue).slice(-2) + ':' + ('0' + timeInputMinuteValue).slice(-2);
 
     // Update time picker values
-    const leftPicker = this.shadowRoot!.getElementById('lightalarm-time-picker-left') as HTMLInputElement;
+    const leftPicker = this.shadowRoot!.getElementById('alarm-time-picker-left') as HTMLInputElement;
     leftPicker.value = time;
-    const rightPicker = this.shadowRoot!.getElementById('lightalarm-time-picker-right') as HTMLInputElement;
+    const rightPicker = this.shadowRoot!.getElementById('alarm-time-picker-right') as HTMLInputElement;
     rightPicker.value = time;
 
-    if (time !== stateObj.state) {
-      this.hass!.callService(stateObj.entity_id.split('.', 1)[0], 'set_datetime', {
-        entity_id: stateObj.entity_id,
-        time,
+    if (time !== timeStr) {
+      this.hass!.callService(this.config!.platform, 'set_alarm', {
+        entity_id: this.config!.media_player,
+        alarm_time: time,
       });
     }
   }
@@ -524,8 +571,8 @@ export class LightalarmCard extends LitElement {
    * @param focusHours Whether to focus the hours input, otherwise focuses minutes
    */
   private _timePickerClick(focusHours: boolean): void {
-    if (localStorage.getItem('lightalarmCard.forceNativePicker') === 'true') {
-      const timeInputWrap = this.shadowRoot!.getElementById('lightalarm-wrapper');
+    if (localStorage.getItem('mediaplayerAlarmCard.forceNativePicker') === 'true') {
+      const timeInputWrap = this.shadowRoot!.getElementById('alarm-wrapper');
       if (!timeInputWrap) return;
 
       if (focusHours) {
@@ -538,11 +585,11 @@ export class LightalarmCard extends LitElement {
       clearTimeout(this.inputBlurTimer);
 
       if (focusHours) {
-        const input = this.shadowRoot!.getElementById('lightalarm-time-input-hour') as HTMLInputElement;
+        const input = this.shadowRoot!.getElementById('alarm-time-input-hour') as HTMLInputElement;
         input?.focus();
         this._moveCursorToEnd(input);
       } else {
-        const input = this.shadowRoot!.getElementById('lightalarm-time-input-minute') as HTMLInputElement;
+        const input = this.shadowRoot!.getElementById('alarm-time-input-minute') as HTMLInputElement;
         input?.focus();
         this._moveCursorToEnd(input);
       }
@@ -550,9 +597,9 @@ export class LightalarmCard extends LitElement {
   }
 
   private _timePickerBlur(ev): void {
-    if (localStorage.getItem('lightalarmCard.forceNativePicker') === 'true') {
+    if (localStorage.getItem('mediaplayerAlarmCard.forceNativePicker') === 'true') {
       this._debounce('saveTimePickerValue', 0, true, ev.target.value);
-      const timeInputWrap = this.shadowRoot!.getElementById('lightalarm-wrapper');
+      const timeInputWrap = this.shadowRoot!.getElementById('alarm-wrapper');
       if (!timeInputWrap) return;
       timeInputWrap.classList.remove('force-native-input-hour', 'force-native-input-minute');
     }
@@ -565,7 +612,7 @@ export class LightalarmCard extends LitElement {
   private _timeInputsBlur(): void {
     this.inputBlurTimer = setTimeout(() => {
       this._debounce('saveTimeInputValue', 0, true);
-      const timeInputWrap = this.shadowRoot!.getElementById('lightalarm-wrapper');
+      const timeInputWrap = this.shadowRoot!.getElementById('alarm-wrapper');
       if (!timeInputWrap) return;
       timeInputWrap.classList.remove('show-input');
       this.timeInputStatus = 'none';
@@ -575,32 +622,44 @@ export class LightalarmCard extends LitElement {
   /**
    * Spinner with mode has changed selected option
    */
-  private _selectedModeChanged(ev): void {
+  private _inputChanged(ev): void {
     forwardHaptic('light');
     // Selected option will transition to '' before transitioning to new value
-    const stateObj = this.hass!.states[this.config!.mode_entity];
+    const sourceText = this.hass!.states[this.config!.media_player].attributes[this.config!.source_attribute];
     if (
       !ev.target!.selectedItem ||
       ev.target.selectedItem.innerText === '' ||
-      ev.target.selectedItem.innerText === stateObj.state
+      ev.target.selectedItem.value === sourceText
     ) {
       return;
     }
 
-    this.hass!.callService('input_select', 'select_option', {
-      option: ev.target.selectedItem.innerText,
-      entity_id: stateObj.entity_id,
+    this.hass!.callService(this.config!.platform, 'set_alarm', {
+      entity_id: this.config!.media_player,
+      source: ev.target.selectedItem.value,
     });
   }
 
-  private _selectedDurationValueChanged(): void {
-    const durationInputEl = this.shadowRoot!.querySelector<HTMLInputElement>('#duration-input')!;
-    const stateObj = this.hass!.states[this.config!.duration_entity];
+  private _volumeChanged(): void {
+    const volumeInputEl = this.shadowRoot!.querySelector<HTMLInputElement>('#volume-input')!;
+    const volume = this.hass!.states[this.config!.media_player].attributes[this.config!.volume_attribute];
 
-    if (durationInputEl.value !== stateObj.state) {
-      this.hass!.callService(stateObj.entity_id.split('.', 1)[0], 'set_value', {
-        value: durationInputEl.value!,
-        entity_id: stateObj.entity_id,
+    if (volumeInputEl.value !== volume) {
+      this.hass!.callService(this.config!.platform, 'set_alarm', {
+        entity_id: this.config!.media_player,
+        volume: volumeInputEl.value!,
+      });
+    }
+  }
+
+  private _enableChanged(): void {
+    const enabledSwitch = this.shadowRoot!.querySelector<HTMLInputElement>('#alarm-enabled')!;
+    const enabled = this.hass!.states[this.config!.media_player].attributes[this.config!.enabled_attribute];
+
+    if (enabledSwitch.checked !== enabled) {
+      this.hass!.callService(this.config!.platform, 'set_alarm', {
+        entity_id: this.config!.media_player,
+        enable: enabledSwitch.checked!,
       });
     }
   }

@@ -10,15 +10,15 @@ import {
 } from 'lit-element';
 import { HomeAssistant, fireEvent, LovelaceCardEditor } from 'custom-card-helpers';
 
-import { LightalarmCardConfig } from './types';
+import { MediaplayerAlarmConfig } from './types';
 import { localize } from './localize/localize';
 
-@customElement('lightalarm-card-editor')
+@customElement('mediaplayer-alarm-editor')
 export class LightalarmCardEditor extends LitElement implements LovelaceCardEditor {
   @property({ attribute: false }) public hass?: HomeAssistant;
-  @internalProperty() private _config?: LightalarmCardConfig;
+  @internalProperty() private _config?: MediaplayerAlarmConfig;
 
-  public setConfig(config: LightalarmCardConfig): void {
+  public setConfig(config: MediaplayerAlarmConfig): void {
     this._config = config;
   }
 
@@ -30,32 +30,72 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
     return '';
   }
 
-  get _time_entity(): string {
+  get _media_player_entity(): string {
     if (this._config) {
-      return this._config.time_entity || '';
+      return this._config.media_player || '';
     }
 
     return '';
   }
 
-  get _mode_entity(): string {
+  get _platform(): string {
     if (this._config) {
-      return this._config.mode_entity || '';
+      return this._config.platform || '';
     }
 
     return '';
   }
 
-  get _duration_entity(): string {
+  get _time_attribute(): string {
     if (this._config) {
-      return this._config.duration_entity || '';
+      return this._config.time_attribute || '';
+    }
+
+    return '';
+  }
+
+  get _enabled_attribute(): string {
+    if (this._config) {
+      return this._config.enabled_attribute || '';
+    }
+
+    return '';
+  }
+
+  get _volume_attribute(): string {
+    if (this._config) {
+      return this._config.volume_attribute || '';
+    }
+
+    return '';
+  }
+
+  get _source_attribute(): string {
+    if (this._config) {
+      return this._config.source_attribute || '';
+    }
+
+    return '';
+  }
+
+  get _source_list_attribute(): string {
+    if (this._config) {
+      return this._config.source_list_attribute || '';
+    }
+
+    return '';
+  }
+
+  get _volume_settings_attribute(): string {
+    if (this._config) {
+      return this._config.volume_settings_attribute || '';
     }
 
     return '';
   }
 
   get _force_native_time_picker_for_device(): boolean {
-    return localStorage.getItem('lightalarmCard.forceNativePicker') === 'true';
+    return localStorage.getItem('mediaplayerAlarmCard.forceNativePicker') === 'true';
   }
 
   protected render(): TemplateResult | void {
@@ -71,14 +111,8 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
     } catch (e) {}
 
     // You can restrict on domain type
-    const time_entities = Object.keys(this.hass.states).filter(
-      eid => eid.substr(0, eid.indexOf('.')) === 'input_datetime',
-    );
-    const mode_entities = Object.keys(this.hass.states).filter(
-      eid => eid.substr(0, eid.indexOf('.')) === 'input_select',
-    );
-    const duration_entities = Object.keys(this.hass.states).filter(
-      eid => eid.substr(0, eid.indexOf('.')) === 'input_number',
+    const media_player_entities = Object.keys(this.hass.states).filter(
+      eid => eid.substr(0, eid.indexOf('.')) === 'media_player',
     );
 
     return html`
@@ -92,12 +126,15 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
 
         <div class="indent">
           <paper-dropdown-menu
-            label="${localize('config.time_entity')}"
+            label="${localize('config.media_player')}"
             @value-changed=${this._valueChanged}
-            .configValue=${'time_entity'}
+            .configValue=${'media_player'}
           >
-            <paper-listbox slot="dropdown-content" .selected=${time_entities.indexOf(this._time_entity)}>
-              ${time_entities.map(entity => {
+            <paper-listbox
+              slot="dropdown-content"
+              .selected=${media_player_entities.indexOf(this._media_player_entity)}
+            >
+              ${media_player_entities.map(entity => {
                 return html`
                   <paper-item>${entity}</paper-item>
                 `;
@@ -105,33 +142,61 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
             </paper-listbox>
           </paper-dropdown-menu>
           <br />
-          <paper-dropdown-menu
-            label="${localize('config.mode_entity')}"
+          <paper-input
+            label="${localize('config.platform')}"
             @value-changed=${this._valueChanged}
-            .configValue=${'mode_entity'}
+            .configValue=${'platform'}
+            .value=${this._platform}
           >
-            <paper-listbox slot="dropdown-content" .selected=${mode_entities.indexOf(this._mode_entity)}>
-              ${mode_entities.map(entity => {
-                return html`
-                  <paper-item>${entity}</paper-item>
-                `;
-              })}
-            </paper-listbox>
-          </paper-dropdown-menu>
+          </paper-input>
           <br />
-          <paper-dropdown-menu
-            label="${localize('config.duration_entity')}"
+          <paper-input
+            label="${localize('config.time_attribute')}"
             @value-changed=${this._valueChanged}
-            .configValue=${'duration_entity'}
+            .configValue=${'time_attribute'}
+            .value=${this._time_attribute}
           >
-            <paper-listbox slot="dropdown-content" .selected=${duration_entities.indexOf(this._duration_entity)}>
-              ${duration_entities.map(entity => {
-                return html`
-                  <paper-item>${entity}</paper-item>
-                `;
-              })}
-            </paper-listbox>
-          </paper-dropdown-menu>
+          </paper-input>
+          <br />
+          <paper-input
+            label="${localize('config.enabled_attribute')}"
+            @value-changed=${this._valueChanged}
+            .configValue=${'enabled_attribute'}
+            .value=${this._enabled_attribute}
+          >
+          </paper-input>
+          <br />
+          <paper-input
+            label="${localize('config.volume_attribute')}"
+            @value-changed=${this._valueChanged}
+            .configValue=${'volume_attribute'}
+            .value=${this._volume_attribute}
+          >
+          </paper-input>
+          <br />
+          <paper-input
+            label="${localize('config.source_attribute')}"
+            @value-changed=${this._valueChanged}
+            .configValue=${'source_attribute'}
+            .value=${this._source_attribute}
+          >
+          </paper-input>
+          <br />
+          <paper-input
+            label="${localize('config.source_list_attribute')}"
+            @value-changed=${this._valueChanged}
+            .configValue=${'source_list_attribute'}
+            .value=${this._source_list_attribute}
+          >
+          </paper-input>
+          <br />
+          <paper-input
+            label="${localize('config.volume_settings_attribute')}"
+            @value-changed=${this._valueChanged}
+            .configValue=${'volume_settings_attribute'}
+            .value=${this._volume_settings_attribute}
+          >
+          </paper-input>
         </div>
         <br />
         <ha-switch
@@ -154,7 +219,7 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
     }
     if (target.configValue) {
       if (target.configValue === 'force_native_time_picker_for_device') {
-        localStorage.setItem('lightalarmCard.forceNativePicker', target.checked ? 'true' : 'false');
+        localStorage.setItem('mediaplayerAlarmCard.forceNativePicker', target.checked ? 'true' : 'false');
       } else if (target.value === '') {
         delete this._config[target.configValue];
       } else {
@@ -182,8 +247,8 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
 const wdw = window as any;
 wdw.customCards = wdw.customCards || [];
 wdw.customCards.push({
-  type: 'lightalarm-card',
-  name: 'Lightalarm Card',
+  type: 'mediaplayer-alarm',
+  name: 'Media Player Alarm Card',
   preview: false,
-  description: 'Coordinate light alarm settings in a beautiful way',
+  description: 'Coordinate mediaplayers alarm settings in a beautiful way',
 });

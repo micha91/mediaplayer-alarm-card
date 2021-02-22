@@ -18,7 +18,7 @@ const plugins = [
 
 export default [
   {
-    input: 'src/lightalarm-card.ts',
+    input: 'src/mediaplayer-alarm-card.ts',
     output: {
       dir: 'dist',
       format: 'es',

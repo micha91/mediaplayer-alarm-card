@@ -1,7 +1,12 @@
-export interface LightalarmCardConfig {
+export interface MediaplayerAlarmConfig {
   type: string;
   name?: string;
-  time_entity: string;
-  mode_entity: string;
-  duration_entity: string;
+  media_player: string;
+  platform: string;
+  time_attribute: string;
+  enabled_attribute: string;
+  volume_attribute: string;
+  source_attribute: string;
+  source_list_attribute: string;
+  volume_settings_attribute: string;
 }
