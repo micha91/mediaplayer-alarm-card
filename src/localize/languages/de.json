@@ -5,6 +5,7 @@
     "media_player": "Media Player-Entität",
     "platform": "Media Player Plattform",
     "time_attribute": "Uhrzeit Attribut",
+    "enabled_attribute": "Alarm Status Attribut",
     "volume_attribute": "Lautstärke Attribut",
     "source_attribute": "Quelle Attribut",
     "source_list_attribute": "Quellen Liste Attribut",

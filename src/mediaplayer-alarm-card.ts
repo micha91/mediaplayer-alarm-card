@@ -243,9 +243,9 @@ export class MediaplayerAlarmCard extends LitElement {
           </div>
 
           <div class="alarm-properties-wrap">
-            <label slot="label" for="alarm-enabled">${'alarm status' || localize('card.alarm_enabled')}</label>
+            <label slot="label" for="alarm-enabled">${localize('card.alarm_enabled')}</label>
             <ha-switch .checked=${alarmEnabled} @change=${this._enableChanged} id="alarm-enabled"></ha-switch>
-            <label slot="label" for="alarm-input">${'source' || localize('card.alarm_source')}</label>
+            <label slot="label" for="alarm-input">${localize('card.alarm_source')}</label>
             <paper-dropdown-menu
               class="alarm-input"
               selected-item-label="${alarmInput}"
@@ -264,7 +264,7 @@ export class MediaplayerAlarmCard extends LitElement {
             </paper-dropdown-menu>
 
             <div class="alarm-volume">
-              <label slot="label" for="alarm-volume">${'volume' || localize('card.alarm_volume')}</label>
+              <label slot="label" for="alarm-volume">${localize('card.alarm_volume')}</label>
               <div class="alarm-volume-slider">
                 <ha-slider
                   .dir="${computeRTLDirection(this.hass!)}"
