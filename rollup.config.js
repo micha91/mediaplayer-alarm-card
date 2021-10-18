@@ -18,7 +18,7 @@ const plugins = [
 
 export default [
   {
-    input: 'src/mediaplayer-alarm-card.ts',
+    input: 'src/service-alarm-card.ts',
     output: {
       dir: 'dist',
       format: 'es',

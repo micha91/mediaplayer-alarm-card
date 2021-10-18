@@ -10,17 +10,19 @@ import {
 } from 'lit-element';
 import { HomeAssistant, fireEvent, LovelaceCardEditor } from 'custom-card-helpers';
 
-import { MediaplayerAlarmConfig } from './types';
+import { ServiceAlarmConfig } from './types';
 import { localize } from './localize/localize';
 
-@customElement('mediaplayer-alarm-editor')
+@customElement('service-alarm-editor')
 export class LightalarmCardEditor extends LitElement implements LovelaceCardEditor {
   @property({ attribute: false }) public hass?: HomeAssistant;
-  @internalProperty() private _config?: MediaplayerAlarmConfig;
+  @internalProperty() private _config?: ServiceAlarmConfig;
 
-  public setConfig(config: MediaplayerAlarmConfig): void {
+  public setConfig(config: ServiceAlarmConfig): void {
     this._config = config;
   }
+
+  _all_entities;
 
   get _title(): string {
     if (this._config) {
@@ -30,9 +32,17 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
     return '';
   }
 
-  get _media_player_entity(): string {
+  get _switch_entity(): string {
     if (this._config) {
-      return this._config.media_player || '';
+      return this._config.switch_entity || '';
+    }
+
+    return '';
+  }
+
+  get _service_entity(): string {
+    if (this._config) {
+      return this._config.service_entity || '';
     }
 
     return '';
@@ -46,17 +56,17 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
     return '';
   }
 
-  get _time_attribute(): string {
+  get _service(): string {
     if (this._config) {
-      return this._config.time_attribute || '';
+      return this._config.service || '';
     }
 
     return '';
   }
 
-  get _enabled_attribute(): string {
+  get _time_attribute(): string {
     if (this._config) {
-      return this._config.enabled_attribute || '';
+      return this._config.time_attribute || '';
     }
 
     return '';
@@ -86,16 +96,33 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
     return '';
   }
 
-  get _volume_settings_attribute(): string {
-    if (this._config) {
-      return this._config.volume_settings_attribute || '';
-    }
-
-    return '';
+  get _force_native_time_picker_for_device(): boolean {
+    return localStorage.getItem('serviceAlarmCard.forceNativePicker') === 'true';
   }
 
-  get _force_native_time_picker_for_device(): boolean {
-    return localStorage.getItem('mediaplayerAlarmCard.forceNativePicker') === 'true';
+  get _switch_entities(): Array<string> {
+    if (this._all_entities && this._platform) {
+      return this._all_entities
+        .filter(element => element.platform === this._platform)
+        .filter(element => element.entity_id.substr(0, element.entity_id.indexOf('.')) === 'switch')
+        .map(element => element.entity_id);
+    }
+    if (this.hass) {
+      return Object.keys(this.hass.states).filter(eid => eid.substr(0, eid.indexOf('.')) === 'switch');
+    }
+    return [];
+  }
+
+  get _service_entities(): Array<string> {
+    if (this._all_entities && this._platform) {
+      return this._all_entities
+        .filter(element => element.platform === this._platform)
+        .map(element => element.entity_id);
+    }
+    if (this.hass) {
+      return Object.keys(this.hass.states);
+    }
+    return [];
   }
 
   protected render(): TemplateResult | void {
@@ -110,10 +137,13 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
       });
     } catch (e) {}
 
-    // You can restrict on domain type
-    const media_player_entities = Object.keys(this.hass.states).filter(
-      eid => eid.substr(0, eid.indexOf('.')) === 'media_player',
-    );
+    if (!this._all_entities) {
+      // Lets request entity details
+      this.hass.callWS({ type: 'config/entity_registry/list' }).then(result => {
+        this._all_entities = result;
+        fireEvent(this, 'config-changed', { config: this._config });
+      });
+    }
 
     return html`
       <div class="card-config">
@@ -125,23 +155,6 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
         ></paper-input>
 
         <div class="indent">
-          <paper-dropdown-menu
-            label="${localize('config.media_player')}"
-            @value-changed=${this._valueChanged}
-            .configValue=${'media_player'}
-          >
-            <paper-listbox
-              slot="dropdown-content"
-              .selected=${media_player_entities.indexOf(this._media_player_entity)}
-            >
-              ${media_player_entities.map(entity => {
-                return html`
-                  <paper-item>${entity}</paper-item>
-                `;
-              })}
-            </paper-listbox>
-          </paper-dropdown-menu>
-          <br />
           <paper-input
             label="${localize('config.platform')}"
             @value-changed=${this._valueChanged}
@@ -150,19 +163,47 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
           >
           </paper-input>
           <br />
+          <paper-dropdown-menu
+            label="${localize('config.switch_entity')}"
+            @value-changed=${this._valueChanged}
+            .configValue=${'switch_entity'}
+          >
+            <paper-listbox slot="dropdown-content" .selected=${this._switch_entities.indexOf(this._switch_entity)}>
+              ${this._switch_entities.map(entity => {
+                return html`
+                  <paper-item>${entity}</paper-item>
+                `;
+              })}
+            </paper-listbox>
+          </paper-dropdown-menu>
+          <br />
+          <paper-dropdown-menu
+            label="${localize('config.service_entity')}"
+            @value-changed=${this._valueChanged}
+            .configValue=${'service_entity'}
+          >
+            <paper-listbox slot="dropdown-content" .selected=${this._service_entities.indexOf(this._service_entity)}>
+              ${this._service_entities.map(entity => {
+                return html`
+                  <paper-item>${entity}</paper-item>
+                `;
+              })}
+            </paper-listbox>
+          </paper-dropdown-menu>
+          <br />
+          <paper-input
+            label="${localize('config.service')}"
+            @value-changed=${this._valueChanged}
+            .configValue=${'service'}
+            .value=${this._service}
+          >
+          </paper-input>
+          <br />
           <paper-input
             label="${localize('config.time_attribute')}"
             @value-changed=${this._valueChanged}
             .configValue=${'time_attribute'}
             .value=${this._time_attribute}
-          >
-          </paper-input>
-          <br />
-          <paper-input
-            label="${localize('config.enabled_attribute')}"
-            @value-changed=${this._valueChanged}
-            .configValue=${'enabled_attribute'}
-            .value=${this._enabled_attribute}
           >
           </paper-input>
           <br />
@@ -189,14 +230,6 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
             .value=${this._source_list_attribute}
           >
           </paper-input>
-          <br />
-          <paper-input
-            label="${localize('config.volume_settings_attribute')}"
-            @value-changed=${this._valueChanged}
-            .configValue=${'volume_settings_attribute'}
-            .value=${this._volume_settings_attribute}
-          >
-          </paper-input>
         </div>
         <br />
         <ha-switch
@@ -219,7 +252,7 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
     }
     if (target.configValue) {
       if (target.configValue === 'force_native_time_picker_for_device') {
-        localStorage.setItem('mediaplayerAlarmCard.forceNativePicker', target.checked ? 'true' : 'false');
+        localStorage.setItem('serviceAlarmCard.forceNativePicker', target.checked ? 'true' : 'false');
       } else if (target.value === '') {
         delete this._config[target.configValue];
       } else {
@@ -237,7 +270,7 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
       .indent {
         padding-left: 40px;
       }
-      .switch-label {
+      .entity-label {
         padding-left: 10px;
       }
     `;
@@ -247,8 +280,8 @@ export class LightalarmCardEditor extends LitElement implements LovelaceCardEdit
 const wdw = window as any;
 wdw.customCards = wdw.customCards || [];
 wdw.customCards.push({
-  type: 'mediaplayer-alarm',
-  name: 'Media Player Alarm Card',
+  type: 'service-alarm',
+  name: 'Service Alarm Card',
   preview: false,
-  description: 'Coordinate mediaplayers alarm settings in a beautiful way',
+  description: 'Coordinate alarm clock settings in a beautiful way',
 });

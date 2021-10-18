@@ -1,5 +1,5 @@
 resources:
-  - url: /local/mediaplayer-alarm.js
+  - url: /local/service-alarm.js
     type: module
 
 title: Home
@@ -8,7 +8,7 @@ views:
     title: Home
     badges: []
     cards:
-      - type: 'custom:mediaplayer-alarm'
+      - type: 'custom:service-alarm'
         duration_entity: input_number.lightalarm_duration
         mode_entity: input_select.lightalarm_options
         time_entity: input_datetime.lightalarm_time

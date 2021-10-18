@@ -2,10 +2,11 @@
   "config": {
     "optional": "Optional",
     "name": "Title",
-    "media_player": "Media Player Entity",
-    "platform": "Media Player Platform",
+    "switch_entity": "Switch Entity",
+    "service_entity": "Service Entity",
+    "platform": "Switch Platform",
+    "service": "Service to call",
     "time_attribute": "Alarm Time Attribute",
-    "enabled_attribute": "Alarm Status Attribute",
     "volume_attribute": "Volume Attribute",
     "source_attribute": "Source Attribute",
     "source_list_attribute": "Source List Attribute",
@@ -13,7 +14,7 @@
     "invalid_configuration": "Invalid Configuration",
     "required_entity_missing": "The entity %entity% has not been set",
     "required_entity_not_found": "The needed entity %entity% has not been found",
-    "required_attribute_not_found": "The needed Attribute %attribute% was not found in the given media player",
+    "required_attribute_not_found": "The needed Attribute %attribute% was not found in the given switch",
     "required_attribute_missing": "The needed Attribute %attribute% was not defined.",
     "force_native_time_picker_for_device": "Use the integrated time picker"
   },

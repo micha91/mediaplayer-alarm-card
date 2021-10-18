@@ -1,5 +1,5 @@
 {
-  "name": "Media Player Alarm Card",
+  "name": "Switch Alarm Card",
   "content_in_root": false,
-  "filename": "mediaplayer-alarm-card.js"
+  "filename": "service-alarm-card.js"
 }

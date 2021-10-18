@@ -22,24 +22,24 @@ import {
 import './editor';
 
 import { CARD_VERSION } from './const';
-import { MediaplayerAlarmConfig } from './types';
+import { ServiceAlarmConfig } from './types';
 import { localize } from './localize/localize';
 
 /* eslint no-console: 0 */
 console.info(
-  `%c MEDIAPLAYER-ALARM-CARD %c ${CARD_VERSION} `,
+  `%c SWITCHPLAYER-ALARM-CARD %c ${CARD_VERSION} `,
   'color: cornsilk; font-weight: bold; background: firebrick',
   'color: firebrick; font-weight: bold; background: cornsilk',
 );
 
-@customElement('mediaplayer-alarm')
-export class MediaplayerAlarmCard extends LitElement {
+@customElement('service-alarm')
+export class SwitchAlarmCard extends LitElement {
   private timeInputStatus: 'none' | 'shown' = 'none';
   private debounceTimer;
   private inputBlurTimer;
 
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
-    return document.createElement('mediaplayer-alarm-editor') as LovelaceCardEditor;
+    return document.createElement('service-alarm-editor') as LovelaceCardEditor;
   }
 
   public static getStubConfig(): object {
@@ -47,19 +47,17 @@ export class MediaplayerAlarmCard extends LitElement {
   }
 
   @property({ attribute: false }) public hass?: HomeAssistant;
-  @internalProperty() private config?: MediaplayerAlarmConfig;
+  @internalProperty() private config?: ServiceAlarmConfig;
 
-  public setConfig(config: MediaplayerAlarmConfig): void {
+  public setConfig(config: ServiceAlarmConfig): void {
     if (!config) throw new Error(localize('config.invalid_configuration'));
 
-    if (!config.media_player)
-      throw new Error(localize('config.required_entity_missing', '%entity%', localize('config.media_player')));
+    if (!config.switch_entity)
+      throw new Error(localize('config.required_entity_missing', '%entity%', localize('config.switch_entity')));
+    if (!config.service_entity)
+      throw new Error(localize('config.required_entity_missing', '%entity%', localize('config.service_entity')));
     if (!config.time_attribute)
       throw new Error(localize('config.required_attribute_missing', '%attribute%', localize('config.time_attribute')));
-    if (!config.enabled_attribute)
-      throw new Error(
-        localize('config.required_attribute_missing', '%attribute%', localize('config.enabled_attribute')),
-      );
     if (!config.volume_attribute)
       throw new Error(
         localize('config.required_attribute_missing', '%attribute%', localize('config.volume_attribute')),
@@ -71,10 +69,6 @@ export class MediaplayerAlarmCard extends LitElement {
     if (!config.source_list_attribute)
       throw new Error(
         localize('config.required_attribute_missing', '%attribute%', localize('config.source_list_attribute')),
-      );
-    if (!config.volume_settings_attribute)
-      throw new Error(
-        localize('config.required_attribute_missing', '%attribute%', localize('config.volume_settings_attribute')),
       );
 
     try {
@@ -93,7 +87,8 @@ export class MediaplayerAlarmCard extends LitElement {
     if (!shouldUpdate) {
       const changedHass: HomeAssistant = changedProps['hass'];
       return (
-        !changedHass || changedHass.states[this.config!.media_player] !== this.hass!.states[this.config!.media_player]
+        !changedHass ||
+        changedHass.states[this.config!.service_entity] !== this.hass!.states[this.config!.service_entity]
       );
     }
     return shouldUpdate;
@@ -104,20 +99,9 @@ export class MediaplayerAlarmCard extends LitElement {
       return html``;
     }
 
-    const alarmEnabled = this.hass.states[this.config.media_player].attributes[this.config.enabled_attribute];
-    if (alarmEnabled === null) {
-      return html`
-        <hui-warning
-          >${this.hass.localize(
-            'config.required_attribute_not_found',
-            '%attribute%',
-            this.config.enabled_attribute,
-          )}</hui-warning
-        >
-      `;
-    }
+    const alarmEnabled = this.hass.states[this.config.switch_entity].state == 'on';
 
-    const timeStr = this.hass.states[this.config.media_player].attributes[this.config.time_attribute];
+    const timeStr = this.hass.states[this.config.service_entity].attributes[this.config.time_attribute];
     if (!timeStr) {
       return html`
         <hui-warning
@@ -130,7 +114,7 @@ export class MediaplayerAlarmCard extends LitElement {
       `;
     }
 
-    const alarmInput = this.hass.states[this.config.media_player].attributes[this.config.source_attribute];
+    const alarmInput = this.hass.states[this.config.service_entity].attributes[this.config.source_attribute];
     if (!alarmInput) {
       return html`
         <hui-warning
@@ -143,7 +127,7 @@ export class MediaplayerAlarmCard extends LitElement {
       `;
     }
 
-    const alarmInputList = this.hass.states[this.config.media_player].attributes[this.config.source_list_attribute];
+    const alarmInputList = this.hass.states[this.config.service_entity].attributes[this.config.source_list_attribute];
     if (!alarmInputList) {
       return html`
         <hui-warning
@@ -156,20 +140,7 @@ export class MediaplayerAlarmCard extends LitElement {
       `;
     }
 
-    const volumeSettings = this.hass.states[this.config.media_player].attributes[this.config.volume_settings_attribute];
-    if (!volumeSettings) {
-      return html`
-        <hui-warning
-          >${this.hass.localize(
-            'config.required_attribute_not_found',
-            '%attribute%',
-            this.config.volume_settings_attribute,
-          )}</hui-warning
-        >
-      `;
-    }
-
-    const alarmVolume = this.hass.states[this.config.media_player].attributes[this.config.volume_attribute];
+    const alarmVolume = this.hass.states[this.config.service_entity].attributes[this.config.volume_attribute];
     if (!alarmVolume) {
       return html`
         <hui-warning
@@ -268,18 +239,15 @@ export class MediaplayerAlarmCard extends LitElement {
               <div class="alarm-volume-slider">
                 <ha-slider
                   .dir="${computeRTLDirection(this.hass!)}"
-                  .step="${Number(volumeSettings.step)}"
-                  .min="${Number(volumeSettings.min)}"
-                  .max="${Number(volumeSettings.max)}"
+                  .step="${Number(0.01)}"
+                  .min="${Number(0)}"
+                  .max="${Number(1)}"
                   .value="${Number(alarmVolume)}"
                   pin
                   @change="${this._volumeChanged}"
                   ignore-bar-touch
                   id="volume-input"
                 ></ha-slider>
-                <span>
-                  ${Number(alarmVolume)}
-                </span>
               </div>
             </div>
           </div>
@@ -465,7 +433,7 @@ export class MediaplayerAlarmCard extends LitElement {
   private _selectedTimeValueChangedPicker(ev): void {
     const newTime = ev.target.value;
 
-    if (localStorage.getItem('mediaplayerAlarmCard.forceNativePicker') === 'true') {
+    if (localStorage.getItem('serviceAlarmCard.forceNativePicker') === 'true') {
       this._debounce('saveTimePickerValue', 3000, false, newTime);
     } else {
       this._saveTimePickerValue(newTime);
@@ -492,7 +460,7 @@ export class MediaplayerAlarmCard extends LitElement {
   }
 
   private _saveTimePickerValue(newTime: string): void {
-    const timeStr = this.hass!.states[this.config!.media_player].attributes[this.config!.time_attribute];
+    const timeStr = this.hass!.states[this.config!.service_entity].attributes[this.config!.time_attribute];
 
     // Cancel if values invalid
     if (newTime === '') {
@@ -506,14 +474,14 @@ export class MediaplayerAlarmCard extends LitElement {
     rightPicker.value = newTime;
 
     if (newTime !== timeStr) {
-      this.hass!.callService(this.config!.platform, 'set_alarm', {
-        entity_id: this.config!.media_player,
-        alarm_time: newTime,
+      this.hass!.callService(this.config!.platform, this.config!.service, {
+        entity_id: this.config!.service_entity,
+        [this.config!.time_attribute]: newTime,
       });
     }
   }
   private _saveTimeInputValue(): void {
-    const timeStr = this.hass!.states[this.config!.media_player].attributes[this.config!.time_attribute];
+    const timeStr = this.hass!.states[this.config!.service_entity].attributes[this.config!.time_attribute];
     const timeInputHour = this.shadowRoot!.getElementById('alarm-time-input-hour') as HTMLInputElement;
     const timeInputMinute = this.shadowRoot!.getElementById('alarm-time-input-minute') as HTMLInputElement;
     const timeInputHourValue = Number(timeInputHour.value);
@@ -543,9 +511,9 @@ export class MediaplayerAlarmCard extends LitElement {
     rightPicker.value = time;
 
     if (time !== timeStr) {
-      this.hass!.callService(this.config!.platform, 'set_alarm', {
-        entity_id: this.config!.media_player,
-        alarm_time: time,
+      this.hass!.callService(this.config!.platform, this.config!.service, {
+        entity_id: this.config!.service_entity,
+        [this.config!.time_attribute]: time,
       });
     }
   }
@@ -571,7 +539,7 @@ export class MediaplayerAlarmCard extends LitElement {
    * @param focusHours Whether to focus the hours input, otherwise focuses minutes
    */
   private _timePickerClick(focusHours: boolean): void {
-    if (localStorage.getItem('mediaplayerAlarmCard.forceNativePicker') === 'true') {
+    if (localStorage.getItem('serviceAlarmCard.forceNativePicker') === 'true') {
       const timeInputWrap = this.shadowRoot!.getElementById('alarm-wrapper');
       if (!timeInputWrap) return;
 
@@ -597,7 +565,7 @@ export class MediaplayerAlarmCard extends LitElement {
   }
 
   private _timePickerBlur(ev): void {
-    if (localStorage.getItem('mediaplayerAlarmCard.forceNativePicker') === 'true') {
+    if (localStorage.getItem('serviceAlarmCard.forceNativePicker') === 'true') {
       this._debounce('saveTimePickerValue', 0, true, ev.target.value);
       const timeInputWrap = this.shadowRoot!.getElementById('alarm-wrapper');
       if (!timeInputWrap) return;
@@ -625,7 +593,7 @@ export class MediaplayerAlarmCard extends LitElement {
   private _inputChanged(ev): void {
     forwardHaptic('light');
     // Selected option will transition to '' before transitioning to new value
-    const sourceText = this.hass!.states[this.config!.media_player].attributes[this.config!.source_attribute];
+    const sourceText = this.hass!.states[this.config!.service_entity].attributes[this.config!.source_attribute];
     if (
       !ev.target!.selectedItem ||
       ev.target.selectedItem.innerText === '' ||
@@ -634,32 +602,31 @@ export class MediaplayerAlarmCard extends LitElement {
       return;
     }
 
-    this.hass!.callService(this.config!.platform, 'set_alarm', {
-      entity_id: this.config!.media_player,
-      source: ev.target.selectedItem.value,
+    this.hass!.callService(this.config!.platform, this.config!.service, {
+      entity_id: this.config!.service_entity,
+      [this.config!.source_attribute]: ev.target.selectedItem.value,
     });
-  }
-
-  private _volumeChanged(): void {
-    const volumeInputEl = this.shadowRoot!.querySelector<HTMLInputElement>('#volume-input')!;
-    const volume = this.hass!.states[this.config!.media_player].attributes[this.config!.volume_attribute];
-
-    if (volumeInputEl.value !== volume) {
-      this.hass!.callService(this.config!.platform, 'set_alarm', {
-        entity_id: this.config!.media_player,
-        volume: volumeInputEl.value!,
-      });
-    }
   }
 
   private _enableChanged(): void {
     const enabledSwitch = this.shadowRoot!.querySelector<HTMLInputElement>('#alarm-enabled')!;
-    const enabled = this.hass!.states[this.config!.media_player].attributes[this.config!.enabled_attribute];
+    const enabled = this.hass!.states[this.config!.switch_entity].state == 'on';
 
     if (enabledSwitch.checked !== enabled) {
-      this.hass!.callService(this.config!.platform, 'set_alarm', {
-        entity_id: this.config!.media_player,
-        enable: enabledSwitch.checked!,
+      this.hass!.callService('switch', 'toggle', {
+        entity_id: this.config!.switch_entity,
+      });
+    }
+  }
+
+  private _volumeChanged(): void {
+    const volumeInputEl = this.shadowRoot!.querySelector<HTMLInputElement>('#volume-input')!;
+    const volume = this.hass!.states[this.config!.service_entity].attributes[this.config!.volume_attribute];
+
+    if (volumeInputEl.value !== volume) {
+      this.hass!.callService(this.config!.platform, this.config!.service, {
+        entity_id: this.config!.service_entity,
+        [this.config!.volume_attribute]: volumeInputEl.value!,
       });
     }
   }

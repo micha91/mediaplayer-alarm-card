@@ -2,10 +2,11 @@
   "config": {
     "optional": "Optional",
     "name": "Titel",
-    "media_player": "Media Player-Entität",
-    "platform": "Media Player Plattform",
+    "switch_entity": "Alarm Switch Entität",
+    "service_entity": "Alarm Dienst Entität",
+    "platform": "Switch Plattform",
+    "service": "Aufzurufender Dienst",
     "time_attribute": "Uhrzeit Attribut",
-    "enabled_attribute": "Alarm Status Attribut",
     "volume_attribute": "Lautstärke Attribut",
     "source_attribute": "Quelle Attribut",
     "source_list_attribute": "Quellen Liste Attribut",
@@ -13,7 +14,7 @@
     "invalid_configuration": "Ungültige Konfiguration",
     "required_entity_missing": "Die notwendige Entität %entity% ist nicht gesetzt",
     "required_entity_not_found": "Die notwendige Entität %entity% konnte nicht gefunden werden",
-    "required_attribute_not_found": "Das notwendige Attribut %attribute% konnte nicht im mediaplayer gefunden werden",
+    "required_attribute_not_found": "Das notwendige Attribut %attribute% konnte nicht im switch gefunden werden",
     "required_attribute_missing": "Das notwendige Attribut %attribute% wurde nicht definiert.",
     "force_native_time_picker_for_device": "Das integrierte Zeitauswahlmenü dises Browsers verwenden"
   },
